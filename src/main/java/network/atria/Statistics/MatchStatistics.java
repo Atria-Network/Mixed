@@ -103,8 +103,8 @@ public class MatchStatistics {
     AtomicInteger loses = new AtomicInteger(profile.getLoses());
     AtomicInteger weekly_loses = new AtomicInteger(profile.getWeekly_loses());
 
-    profile.setWins(loses.incrementAndGet());
-    profile.setWeekly_wins(weekly_loses.incrementAndGet());
+    profile.setLoses(loses.incrementAndGet());
+    profile.setWeekly_loses(weekly_loses.incrementAndGet());
   }
 
   public void countPlaytime(UUID uuid, Match match) {
