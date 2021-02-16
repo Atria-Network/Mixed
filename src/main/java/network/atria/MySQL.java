@@ -39,7 +39,7 @@ public class MySQL {
       statement.executeUpdate(
           "CREATE TABLE IF NOT EXISTS STATS(UUID varchar(36) NOT NULL PRIMARY KEY, NAME varchar(20), KILLS int, DEATHS int, FLAGS int, CORES int, WOOLS int, MONUMENTS int, PLAYTIME int, POINTS int, WINS int, LOSES int);");
       statement.executeUpdate(
-          "CREATE TABLE IF NOT EXISTS WEEK_STATS(UUID varchar(36) NOT NULL PRIMARY KEY, NAME varchar(20), KILLS int, DEATHS int, FLAGS int, CORES int, WOOLS int, MONUMENTS int, PLAYTIME int, WINS int, LOSES int);");
+          "CREATE TABLE IF NOT EXISTS WEEK_STATS(UUID varchar(36) NOT NULL PRIMARY KEY, NAME varchar(20), KILLS int, DEATHS int, FLAGS int, CORES int, WOOLS int, MONUMENTS int, PLAYTIME int, POINTS int, WINS int, LOSES int);");
       statement.executeUpdate(
           "CREATE TABLE IF NOT EXISTS RANKS(UUID varchar(36) NOT NULL PRIMARY KEY, NAME varchar(20), GAMERANK varchar(20), EFFECT varchar(20), SOUND varchar(20), PROJECTILE varchar(20));");
 
@@ -139,8 +139,7 @@ public class MySQL {
       ResultSet rs = null;
       PreparedStatement statement = null;
       Connection connection = null;
-      String sql =
-          "SELECT UUID FROM STATS WHERE UUID = ? union SELECT UUID FROM RANKS WHERE UUID = ? LIMIT 1";
+      String sql = "SELECT UUID FROM STATS WHERE UUID = ? LIMIT 1";
       try {
         connection = MySQL.get().getHikari().getConnection();
         statement = connection.prepareStatement(sql);
@@ -169,7 +168,7 @@ public class MySQL {
               + name
               + "', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0');";
       String query2 =
-          "INSERT INTO WEEK_STATS(UUID, NAME, KILLS, DEATHS, FLAGS, CORES, WOOLS, MONUMENTS, PLAYTIME, WINS, LOSES) VALUES ('"
+          "INSERT INTO WEEK_STATS(UUID, NAME, KILLS, DEATHS, FLAGS, CORES, WOOLS, MONUMENTS, PLAYTIME, POINTS, WINS, LOSES) VALUES ('"
               + uuid
               + "', '"
               + name

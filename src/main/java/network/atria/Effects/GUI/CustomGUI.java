@@ -152,7 +152,9 @@ public class CustomGUI implements Listener {
             break;
           case "Reset Kill Effect":
             MySQL.SQLQuery.update("RANKS", "EFFECT", "NONE", player.getUniqueId());
-            profile.setKilleffect(new Effect("NONE", text("NONE"), 0, false));
+            profile.setKilleffect(
+                new Effect(
+                    "NONE", text("NONE", NamedTextColor.GREEN, TextDecoration.BOLD), 0, false));
             audience.sendMessage(
                 text("Reset your ", NamedTextColor.GREEN)
                     .append(text("Kill Effect", NamedTextColor.YELLOW)));
@@ -160,15 +162,22 @@ public class CustomGUI implements Listener {
             break;
           case "Reset Kill Sound":
             MySQL.SQLQuery.update("RANKS", "SOUND", "NONE", player.getUniqueId());
-            profile.setKillsound(new Effect("NONE", text("NONE"), 0, false));
+            profile.setKillsound(
+                new Effect(
+                    "NONE", text("NONE", NamedTextColor.GREEN, TextDecoration.BOLD), 0, false));
             audience.sendMessage(
                 text("Reset your ", NamedTextColor.GREEN)
                     .append(text("Kill Sound", NamedTextColor.YELLOW)));
             player.closeInventory();
             break;
           case "Reset Projectile Trails":
-            MySQL.SQLQuery.update("RANKS", "PROJECTILE", "NONE", player.getUniqueId());
-            profile.setProjectile(new Effect("NONE", text("NONE"), 0, false));
+            MySQL.SQLQuery.update("RANKS", "PROJECTILE", "DEFAULT", player.getUniqueId());
+            profile.setProjectile(
+                new Effect(
+                    "DEFAULT",
+                    text("DEFAULT", NamedTextColor.GREEN, TextDecoration.BOLD),
+                    0,
+                    false));
             audience.sendMessage(
                 text("Reset your ", NamedTextColor.GREEN)
                     .append(text("Projectile Trails", NamedTextColor.YELLOW)));

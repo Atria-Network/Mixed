@@ -22,7 +22,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.md_5.bungee.api.ChatColor;
 import network.atria.Mixed;
 import network.atria.MySQL;
-import network.atria.UserProfile.UserProfile;
 import network.atria.Util.Fetcher;
 import network.atria.Util.TextFormat;
 import org.bukkit.Bukkit;
@@ -44,7 +43,9 @@ public class StatsCommand {
       showStats(matchPlayer.getId(), player);
     } else if (Bukkit.getPlayer(playerName) != null) {
       MatchPlayer target = PGM.get().getMatchManager().getPlayer(Bukkit.getPlayer(playerName));
-      if (target != null) showStats(target.getId(), player);
+      if (target != null) {
+        showStats(target.getId(), player);
+      }
     } else if (MySQL.SQLQuery.playerExists(Fetcher.getUUID(playerName))) {
       showStats(Fetcher.getUUID(playerName), player);
     } else {
@@ -54,7 +55,7 @@ public class StatsCommand {
   }
 
   private void showStats(UUID uuid, Player sender) {
-    Map<String, Integer> stats;
+    Map<String, Integer> stats = getStats(uuid);
     MatchPlayer player =
         PGM.get().getMatchManager().getPlayer(uuid) != null
             ? PGM.get().getMatchManager().getPlayer(uuid)
@@ -64,51 +65,49 @@ public class StatsCommand {
             ? player.getPrefixedName()
             : TextFormat.format(text(Fetcher.getName(uuid), NamedTextColor.DARK_AQUA));
     Audience audience = Mixed.get().getAudience().player(sender);
-    UserProfile profile = Mixed.get().getProfileManager().getProfile(uuid);
+    int kills = stats.get("KILLS");
+    int deaths = stats.get("DEATHS");
+    int wools = stats.get("WOOLS");
+    int cores = stats.get("CORES");
+    int monuments = stats.get("MONUMENTS");
+    int flags = stats.get("FLAGS");
+    int wins = stats.get("WINS");
+    int loses = stats.get("LOSES");
+    double kd = divide(kills, deaths).doubleValue();
+    double wd = divide(wins, deaths).doubleValue();
 
-    if (profile != null) {
-      audience.sendMessage(
-          text(LegacyFormatUtils.horizontalLineHeading(prefixedName, ChatColor.WHITE)));
-      audience.sendMessage(formatStats("Kills: ", profile.getKills()));
-      audience.sendMessage(formatStats("Deaths: ", profile.getDeaths()));
-      audience.sendMessage(
-          text("K/D: ", NamedTextColor.AQUA)
-              .append(
-                  text(
-                      kd(profile.getKills(), profile.getDeaths()).doubleValue(),
-                      NamedTextColor.BLUE)));
-      audience.sendMessage(formatStats("Wool Placed: ", profile.getWools()));
-      audience.sendMessage(formatStats("Cores Leaked: ", profile.getCores()));
-      audience.sendMessage(formatStats("Monuments Destroyed: ", profile.getMonuments()));
-      audience.sendMessage(formatStats("Flag Captured: ", profile.getFlags()));
-    } else {
-      stats = getStats(uuid);
-      audience.sendMessage(
-          text(LegacyFormatUtils.horizontalLineHeading(prefixedName, ChatColor.WHITE)));
-      audience.sendMessage(formatStats("Kills: ", stats.get("KILLS")));
-      audience.sendMessage(formatStats("Deaths: ", stats.get("DEATHS")));
-      audience.sendMessage(
-          text("K/D: ", NamedTextColor.AQUA)
-              .append(
-                  text(
-                      kd(stats.get("KILLS"), stats.get("DEATHS")).doubleValue(),
-                      NamedTextColor.BLUE)));
-      audience.sendMessage(formatStats("Wool Placed: ", stats.get("WOOLS")));
-      audience.sendMessage(formatStats("Cores Leaked: ", stats.get("CORES")));
-      audience.sendMessage(formatStats("Monuments Destroyed: ", stats.get("MONUMENTS")));
-      audience.sendMessage(formatStats("Flag Captured: ", stats.get("FLAGS")));
-    }
-    audience.sendMessage(text(LegacyFormatUtils.horizontalLine(ChatColor.WHITE, 300)));
+    audience.sendMessage(
+        text(LegacyFormatUtils.horizontalLineHeading(prefixedName, ChatColor.BLUE, 250)));
+    audience.sendMessage(
+        formatStats("Kills: ", kills)
+            .append(formatStats("Deaths: ", deaths))
+            .append(text("K/D: ", NamedTextColor.DARK_AQUA).append(text(kd, NamedTextColor.AQUA))));
+    audience.sendMessage(
+        text(LegacyFormatUtils.horizontalLineHeading("§bObjectives", ChatColor.BLUE, 250)));
+    audience.sendMessage(
+        formatStats("Wools: ", wools)
+            .append(formatStats("Cores: ", cores))
+            .append(formatStats("Monuments: ", monuments))
+            .append(formatStats("Flags: ", flags)));
+    audience.sendMessage(
+        text(LegacyFormatUtils.horizontalLineHeading("§bOthers", ChatColor.BLUE, 250)));
+    audience.sendMessage(
+        formatStats("Wins: ", wins)
+            .append(
+                formatStats("Loses: ", loses)
+                    .append(text("W/L: ", NamedTextColor.DARK_AQUA))
+                    .append(text(wd, NamedTextColor.AQUA))));
   }
 
   private TextComponent formatStats(String ladder, int value) {
     return text()
-        .append(text(ladder, NamedTextColor.AQUA))
-        .append(text(value, NamedTextColor.BLUE))
+        .append(text(ladder, NamedTextColor.DARK_AQUA))
+        .append(text(value, NamedTextColor.AQUA))
+        .append(text(" | ", NamedTextColor.WHITE))
         .build();
   }
 
-  private BigDecimal kd(int kills, int deaths) {
+  private BigDecimal divide(int kills, int deaths) {
     BigDecimal bd1 = new BigDecimal(kills);
     BigDecimal bd2 = new BigDecimal(deaths);
     BigDecimal result;
@@ -126,7 +125,7 @@ public class StatsCommand {
     ResultSet rs = null;
     PreparedStatement statement = null;
     String query =
-        "SELECT KILLS, DEATHS, CORES, WOOLS, MONUMENTS, FLAGS, WINS, LOSES FROM STATS WHERE UUID = ?";
+        "SELECT KILLS, DEATHS, CORES, WOOLS, MONUMENTS, FLAGS, WINS, LOSES FROM STATS WHERE UUID = ? LIMIT 1";
     try {
       connection = MySQL.get().getHikari().getConnection();
       statement = connection.prepareStatement(query);

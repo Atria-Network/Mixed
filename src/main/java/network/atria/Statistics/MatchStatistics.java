@@ -106,7 +106,7 @@ public class MatchStatistics {
     Connection connection = null;
     PreparedStatement statement = null;
     String baseSQL =
-        "INSERT INTO {table} (UUID, KILLS, DEATHS, FLAGS, CORES, WOOLS, MONUMENTS, PLAYTIME, WINS, LOSES, POINTS) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE "
+        "INSERT INTO {table} (UUID, NAME, KILLS, DEATHS, FLAGS, CORES, WOOLS, MONUMENTS, PLAYTIME, WINS, LOSES, POINTS) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE "
             + "KILLS = KILLS + VALUES(KILLS), DEATHS = DEATHS + VALUES(DEATHS), FLAGS = FLAGS + VALUES(FLAGS), CORES = CORES + VALUES(CORES), WOOLS = WOOLS + VALUES(WOOLS), MONUMENTS = MONUMENTS + VALUES(MONUMENTS), PLAYTIME = PLAYTIME + VALUES(PLAYTIME), WINS = WINS + VALUES(WINS), LOSES = LOSES + VALUES(LOSES), POINTS = POINTS + VALUES(POINTS)";
     String sql = baseSQL.replace("{table}", table);
     if (table.equalsIgnoreCase("WEEK_STATS")) {
@@ -118,6 +118,7 @@ public class MatchStatistics {
       connection = MySQL.get().getHikari().getConnection();
       statement = connection.prepareStatement(sql);
       statement.setString(1, uuid.toString());
+      statement.setString(2, name);
       statement.setInt(
           2, stats.getKills().get(uuid) != null ? stats.getKills().get(uuid).get() : 0);
       statement.setInt(
@@ -130,13 +131,12 @@ public class MatchStatistics {
           6, stats.getWools().get(uuid) != null ? stats.getWools().get(uuid).get() : 0);
       statement.setInt(
           7, stats.getMonuments().get(uuid) != null ? stats.getMonuments().get(uuid).get() : 0);
+      statement.setInt(8, stats.getWins().get(uuid) != null ? stats.getWins().get(uuid).get() : 0);
+      statement.setInt(9, stats.getWins().get(uuid) != null ? stats.getWins().get(uuid).get() : 0);
       statement.setInt(
-          8, stats.getPlaytime().get(uuid) != null ? stats.getPlaytime().get(uuid).get() : 0);
+          10, stats.getLoses().get(uuid) != null ? stats.getLoses().get(uuid).get() : 0);
       statement.setInt(
-          9, stats.getPoints().get(uuid) != null ? stats.getPoints().get(uuid).get() : 0);
-      statement.setInt(10, stats.getWins().get(uuid) != null ? stats.getWins().get(uuid).get() : 0);
-      statement.setInt(
-          11, stats.getLoses().get(uuid) != null ? stats.getLoses().get(uuid).get() : 0);
+          11, stats.getPlaytime().get(uuid) != null ? stats.getPlaytime().get(uuid).get() : 0);
       statement.executeUpdate();
     } catch (SQLException e) {
       e.printStackTrace();
