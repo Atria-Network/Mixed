@@ -4,6 +4,7 @@ import java.sql.*;
 import java.util.*;
 import network.atria.Manager.RankManager;
 import network.atria.Mixed;
+import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -11,6 +12,7 @@ import org.bukkit.plugin.Plugin;
 import tc.oc.pgm.api.match.MatchModule;
 import tc.oc.pgm.api.match.MatchScope;
 import tc.oc.pgm.api.match.event.MatchFinishEvent;
+import tc.oc.pgm.api.match.event.MatchLoadEvent;
 import tc.oc.pgm.api.match.event.MatchStartEvent;
 import tc.oc.pgm.api.party.Competitor;
 import tc.oc.pgm.api.player.MatchPlayer;
@@ -19,6 +21,7 @@ import tc.oc.pgm.api.player.event.MatchPlayerDeathEvent;
 import tc.oc.pgm.core.CoreLeakEvent;
 import tc.oc.pgm.destroyable.DestroyableDestroyedEvent;
 import tc.oc.pgm.events.ListenerScope;
+import tc.oc.pgm.events.PlayerLeaveMatchEvent;
 import tc.oc.pgm.events.PlayerParticipationStartEvent;
 import tc.oc.pgm.events.PlayerParticipationStopEvent;
 import tc.oc.pgm.flag.event.FlagCaptureEvent;
@@ -26,6 +29,11 @@ import tc.oc.pgm.wool.PlayerWoolPlaceEvent;
 
 @ListenerScope(MatchScope.RUNNING)
 public class MatchEvents implements Listener, MatchModule {
+
+  @EventHandler(priority = EventPriority.MONITOR)
+  public void onMatchLoad(MatchLoadEvent event) {
+    Mixed.get().getStatistics().newMatch();
+  }
 
   @EventHandler(priority = EventPriority.MONITOR)
   public void onMatchStart(MatchStartEvent event) {
@@ -51,19 +59,32 @@ public class MatchEvents implements Listener, MatchModule {
   }
 
   @EventHandler(priority = EventPriority.MONITOR)
+  public void onLeaveMatch(PlayerLeaveMatchEvent event) {
+    Bukkit.getScheduler()
+        .runTaskAsynchronously(
+            Mixed.get(),
+            () -> {
+              Mixed.get()
+                  .getStatistics()
+                  .updateStats(
+                      event.getPlayer().getId(), event.getPlayer().getNameLegacy(), "STATS");
+              Mixed.get()
+                  .getStatistics()
+                  .updateStats(
+                      event.getPlayer().getId(), event.getPlayer().getNameLegacy(), "WEEK_STATS");
+            });
+  }
+
+  @EventHandler(priority = EventPriority.MONITOR)
   public void onPlayerDeath(MatchPlayerDeathEvent event) {
     MatchPlayer victim = event.getPlayer();
-    MatchPlayer murder;
 
     if (event.isTeamKill()) return;
     Mixed.get().getStatistics().addDeath(victim.getId());
 
     if (event.getKiller() != null && !event.isSelfKill() && !event.isSuicide()) {
-      murder = event.getKiller().getParty().getPlayer(event.getKiller().getId());
-      if (!murder.getParty().equals(victim.getParty())) {
-        Mixed.get().getStatistics().addKill(murder.getId());
-        Mixed.get().getStatistics().addPoint(murder.getId(), 5);
-      }
+      Mixed.get().getStatistics().addKill(event.getKiller().getId());
+      Mixed.get().getStatistics().addPoint(event.getKiller().getId(), 5);
     }
   }
 
@@ -119,21 +140,31 @@ public class MatchEvents implements Listener, MatchModule {
           .forEach(
               player -> {
                 if (winners.contains(player.getCompetitor())) {
-                  Mixed.get().getStatistics().addWins(player);
+                  Mixed.get().getStatistics().addWins(player.getId());
                 } else {
-                  Mixed.get().getStatistics().addLoses(player);
+                  Mixed.get().getStatistics().addLoses(player.getId());
                 }
               });
     }
-
-    event
-        .getMatch()
-        .getParticipants()
-        .forEach(
-            player -> {
-              Mixed.get().getStatistics().addPoint(player.getId(), 10);
-              manager.RankUP(player);
-            });
+    Bukkit.getScheduler()
+        .runTaskLaterAsynchronously(
+            Mixed.get(),
+            () ->
+                event
+                    .getMatch()
+                    .getParticipants()
+                    .forEach(
+                        player -> {
+                          Mixed.get().getStatistics().addPoint(player.getId(), 10);
+                          manager.RankUP(player);
+                          Mixed.get()
+                              .getStatistics()
+                              .updateStats(player.getId(), player.getNameLegacy(), "STATS");
+                          Mixed.get()
+                              .getStatistics()
+                              .updateStats(player.getId(), player.getNameLegacy(), "WEEK_STATS");
+                        }),
+            10L);
     Mixed.get().getStatistics().endMatch();
   }
 
