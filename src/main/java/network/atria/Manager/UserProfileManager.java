@@ -7,13 +7,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 import network.atria.Effects.Particles.Effect;
 import network.atria.Mixed;
 import network.atria.MySQL;
@@ -40,7 +37,6 @@ public class UserProfileManager implements Listener {
 
   public UserProfile createProfile(String name, UUID uuid) {
     EffectManager manager = Mixed.get().getEffectManager();
-    HashMap<String, Integer> stats = getUserData(uuid, name);
 
     Effect killeffect =
         manager.findEffect(getAsString("RANKS", "EFFECT", uuid)).isPresent()
@@ -61,83 +57,24 @@ public class UserProfileManager implements Listener {
         killeffect,
         projectile,
         killsound,
-        stats.get("KILLS"),
-        stats.get("DEATHS"),
-        stats.get("FLAGS"),
-        stats.get("CORES"),
-        stats.get("WOOLS"),
-        stats.get("MONUMENTS"),
-        stats.get("PLAYTIME"),
-        stats.get("POINTS"),
-        stats.get("WINS"),
-        stats.get("LOSES"),
-        stats.get("WEEKLY_KILLS"),
-        stats.get("WEEKLY_DEATHS"),
-        stats.get("WEEKLY_FLAGS"),
-        stats.get("WEEKLY_CORES"),
-        stats.get("WEEKLY_WOOLS"),
-        stats.get("WEEKLY_MONUMENTS"),
-        stats.get("WEEKLY_PLAYTIME"),
-        stats.get("WEEKLY_WINS"),
-        stats.get("WEEKLY_LOSES"));
+        MySQL.SQLQuery.getAsInteger("STATS", "POINTS", uuid));
   }
 
   public void pushProfile(UserProfile profile) {
     Connection connection = null;
-    PreparedStatement statement_1;
-    PreparedStatement statement_2;
-    PreparedStatement statement_3;
-    String sql_1 =
-        "UPDATE STATS SET KILLS = ?, DEATHS = ?, FLAGS = ?, CORES = ?, WOOLS = ?, MONUMENTS = ?, PLAYTIME = ?, POINTS = ?, WINS = ?, LOSES = ? WHERE UUID = ?";
-    String sql_2 =
-        "UPDATE WEEK_STATS SET KILLS = ?, DEATHS = ?, FLAGS = ?, CORES = ?, WOOLS = ?, MONUMENTS = ?, PLAYTIME = ?, WINS = ?, LOSES = ? WHERE UUID = ?";
-    String sql_3 =
+    PreparedStatement statement;
+    String sql =
         "UPDATE RANKS SET GAMERANK = ?, EFFECT = ?, SOUND = ?, PROJECTILE = ? WHERE UUID = ?";
-    Map<UUID, AtomicInteger> playtime = Mixed.get().getStatistics().getPlaytime();
-    if (playtime.containsKey(profile.getUUID()) && playtime.get(profile.getUUID()).get() != 0) {
-      profile.setPlaytime(profile.getPlaytime() + playtime.get(profile.getUUID()).get());
-      profile.setWeekly_playtime(
-          profile.getWeekly_playtime() + playtime.get(profile.getUUID()).get());
-    }
     try {
       connection = MySQL.get().getHikari().getConnection();
-      statement_1 = connection.prepareStatement(sql_1);
-      statement_1.setInt(1, profile.getKills());
-      statement_1.setInt(2, profile.getDeaths());
-      statement_1.setInt(3, profile.getFlags());
-      statement_1.setInt(4, profile.getCores());
-      statement_1.setInt(5, profile.getWools());
-      statement_1.setInt(6, profile.getMonuments());
-      statement_1.setInt(7, profile.getPlaytime());
-      statement_1.setInt(8, profile.getPoints());
-      statement_1.setInt(9, profile.getWins());
-      statement_1.setInt(10, profile.getLoses());
-      statement_1.setString(11, profile.getUUID().toString());
-      statement_1.executeUpdate();
-      statement_1.close();
-
-      statement_2 = connection.prepareStatement(sql_2);
-      statement_2.setInt(1, profile.getWeekly_kills());
-      statement_2.setInt(2, profile.getWeekly_deaths());
-      statement_2.setInt(3, profile.getWeekly_flags());
-      statement_2.setInt(4, profile.getWeekly_cores());
-      statement_2.setInt(5, profile.getWeekly_wools());
-      statement_2.setInt(6, profile.getWeekly_monuments());
-      statement_2.setInt(7, profile.getWeekly_playtime());
-      statement_2.setInt(8, profile.getWeekly_wins());
-      statement_2.setInt(9, profile.getWeekly_loses());
-      statement_2.setString(10, profile.getUUID().toString());
-      statement_2.executeUpdate();
-      statement_2.close();
-
-      statement_3 = connection.prepareStatement(sql_3);
-      statement_3.setString(1, profile.getRank().getName());
-      statement_3.setString(2, profile.getKilleffect().getName());
-      statement_3.setString(3, profile.getKillsound().getName());
-      statement_3.setString(4, profile.getProjectile().getName());
-      statement_3.setString(5, profile.getUUID().toString());
-      statement_3.executeUpdate();
-      statement_3.close();
+      statement = connection.prepareStatement(sql);
+      statement.setString(1, profile.getRank().getName());
+      statement.setString(2, profile.getKilleffect().getName());
+      statement.setString(3, profile.getKillsound().getName());
+      statement.setString(4, profile.getProjectile().getName());
+      statement.setString(5, profile.getUUID().toString());
+      statement.executeUpdate();
+      statement.close();
     } catch (SQLException e) {
       e.printStackTrace();
     } finally {
@@ -150,67 +87,6 @@ public class UserProfileManager implements Listener {
       }
       this.profiles.remove(profile.getUUID());
     }
-  }
-
-  private HashMap<String, Integer> getUserData(UUID uuid, String name) {
-    HashMap<String, Integer> stats = Maps.newHashMap();
-    Connection connection = null;
-    PreparedStatement statement_1 = null;
-    PreparedStatement statement_2 = null;
-    ResultSet rs_1 = null;
-    ResultSet rs_2 = null;
-    String sql_1 =
-        "SELECT KILLS, DEATHS, CORES, WOOLS, MONUMENTS, FLAGS, PLAYTIME, POINTS, WINS, LOSES FROM STATS WHERE UUID = ?";
-    String sql_2 =
-        "SELECT KILLS, DEATHS, CORES, WOOLS, MONUMENTS, FLAGS, PLAYTIME, WINS, LOSES FROM WEEK_STATS WHERE UUID = ?";
-
-    if (!MySQL.SQLQuery.playerExist_in_weekly_table(uuid)) {
-      create_weekly_table(uuid, name);
-    }
-    try {
-      connection = MySQL.get().getHikari().getConnection();
-      statement_1 = connection.prepareStatement(sql_1);
-      statement_1.setString(1, uuid.toString());
-      rs_1 = statement_1.executeQuery();
-
-      if (rs_1.next()) {
-        stats.put("KILLS", rs_1.getInt("KILLS"));
-        stats.put("DEATHS", rs_1.getInt("DEATHS"));
-        stats.put("CORES", rs_1.getInt("CORES"));
-        stats.put("WOOLS", rs_1.getInt("WOOLS"));
-        stats.put("MONUMENTS", rs_1.getInt("MONUMENTS"));
-        stats.put("FLAGS", rs_1.getInt("FLAGS"));
-        stats.put("PLAYTIME", rs_1.getInt("PLAYTIME"));
-        stats.put("POINTS", rs_1.getInt("POINTS"));
-        stats.put("WINS", rs_1.getInt("WINS"));
-        stats.put("LOSES", rs_1.getInt("LOSES"));
-      }
-
-      statement_2 = connection.prepareStatement(sql_2);
-      statement_2.setString(1, uuid.toString());
-      rs_2 = statement_2.executeQuery();
-
-      if (rs_2.next()) {
-        stats.put("WEEKLY_KILLS", rs_2.getInt("KILLS"));
-        stats.put("WEEKLY_DEATHS", rs_2.getInt("DEATHS"));
-        stats.put("WEEKLY_CORES", rs_2.getInt("CORES"));
-        stats.put("WEEKLY_WOOLS", rs_2.getInt("WOOLS"));
-        stats.put("WEEKLY_MONUMENTS", rs_2.getInt("MONUMENTS"));
-        stats.put("WEEKLY_FLAGS", rs_2.getInt("FLAGS"));
-        stats.put("WEEKLY_PLAYTIME", rs_2.getInt("PLAYTIME"));
-        stats.put("WEEKLY_WINS", rs_2.getInt("WINS"));
-        stats.put("WEEKLY_LOSES", rs_2.getInt("LOSES"));
-      }
-    } catch (SQLException e) {
-      e.printStackTrace();
-    } finally {
-      closeConnection(connection);
-      closeResultSet(rs_1);
-      closeResultSet(rs_2);
-      closeStatement(statement_1);
-      closeStatement(statement_2);
-    }
-    return stats;
   }
 
   public void addProfile(UUID uuid, UserProfile profile) {
