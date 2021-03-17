@@ -4,40 +4,68 @@
 
 KILL_EFFECT:
   BLOOD:
+    name: "§4Blood"
+    material: "REDSTONE"
+    slot: 0
     points: 0
     donor: false
-    number: 0
-    material: "REDSTONE"
+    donor-only: false
+
   FLAME:
+    name: "§cFlame"
+    material: "LAVA_BUCKET"
+    slot: 1
     points: 2000
     donor: false
-    number: 1
-    material: "LAVA_BUCKET"
+    donor-only: false
+
   HEART:
+    name: "§dHeart"
+    material: "GOLDEN_APPLE"
+    slot: 2
     points: 5000
     donor: false
-    number: 2
-    material: "GOLDEN_APPLE"
+    donor-only: false
+
   SMOKE:
+    name: "§7Smoke"
+    material: "FIREWORK_CHARGE"
+    slot: 3
     points: 10000
     donor: false
-    number: 3
-    material: "FIREWORK_CHARGE"
+    donor-only: false
+
   MAGIC:
+    name: "§5Magic"
+    material: "ENCHANTED_BOOK"
+    slot: 4
     points: 20000
     donor: false
-    number: 4
-    material: "ENCHANTED_BOOK"
+    donor-only: false
+
   SPHERE:
+    name: "§9Sphere"
+    material: "ENDER_PEARL"
+    slot: 5
     points: 50000
     donor: false
-    number: 5
-    material: "ENDER_PEARL"
+    donor-only: false
+
   RAINBOW:
+    name: "§5R§1A§aI§eN§6B§4O§9W"
+    material: "NETHER_STAR"
+    slot: 6
     points: 100000
     donor: false
-    number: 6
-    material: "NETHER_STAR"
+    donor-only: false
+
+  DONOR:
+    name: "§6Donor"
+    material: "GOLD_NUGGET"
+    slot: 18
+    points: 0
+    donor: true
+    donor-only: true
 
 ################################
 #        KILL SOUNDS          #
@@ -45,30 +73,44 @@ KILL_EFFECT:
 
 KILL_SOUND:
   DEFAULT:
+    name: "§fDEFAULT"
+    material: "GHAST_TEAR"
+    slot: 10
     points: 0
     donor: false
-    number: 10
-    material: "GHAST_TEAR"
+    donor-only: false
+
   VILLAGER:
+    name: "§6Villager"
+    material: "REDSTONE"
+    slot: 11
     points: 500
     donor: false
-    number: 11
-    material: "REDSTONE"
+    donor-only: false
+
   BOMB:
+    name: "§4BOMB"
+    material: "TNT"
+    slot: 12
     points: 1000
     donor: false
-    number: 12
-    material: "TNT"
+    donor-only: false
+
   BURP:
+    name: "§aBurp"
+    material: "SEEDS"
+    slot: 13
     points: 3000
     donor: false
-    number: 13
-    material: "SEEDS"
+    donor-only: false
+
   HOWL:
+    name: "§7Howl"
+    material: "BONE"
+    slot: 14
     points: 6000
     donor: false
-    number: 14
-    material: "BONE"
+    donor-only: false
 
 ################################
 #      Projectile Trails      #
@@ -76,27 +118,41 @@ KILL_SOUND:
 
 PROJECTILE_TRAILS:
   GREEN:
+    name: "§6GREEN STAR"
+    material: "EMERALD"
+    slot: 10
     points: 4000
     donor: false
-    number: 10
-    material: "EMERALD"
+    donor-only: false
+
   WITCH:
+    name: "§5Witch"
+    material: "POTION"
+    slot: 11
     points: 40000
     donor: false
-    number: 11
-    material: "POTION"
+    donor-only: false
+
   HEART_TRAIL:
+    name: "§dHeart"
+    material: "GOLDEN_APPLE"
+    slot: 12
     points: 12000
     donor: false
-    number: 12
-    material: "GOLDEN_APPLE"
+    donor-only: false
+
   NOTE:
+    name: "§bNote"
+    material: "NOTE_BLOCK"
+    slot: 13
     points: 40000
     donor: false
-    number: 13
-    material: "NOTE_BLOCK"
+    donor-only: false
+
   RAINBOW_TRAIL:
+    name: "§5R§1A§aI§eN§6B§4O§9W"
+    material: "NETHER_STAR"
+    slot: 14
     points: 100000
     donor: false
-    number: 14
-    material: "NETHER_STAR"
+    donor-only: false

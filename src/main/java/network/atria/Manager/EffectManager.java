@@ -1,24 +1,25 @@
 package network.atria.Manager;
 
-import static net.kyori.adventure.text.Component.text;
-
 import com.google.common.collect.Sets;
-import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import network.atria.Effects.Particles.Effect;
-import network.atria.MySQL;
+import network.atria.UserProfile.UserProfile;
 import network.atria.Util.KillEffectsConfig;
+import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 public class EffectManager {
 
-  private static Set<Effect> effects;
+  private static Set<Effect> kill_effects;
+  private static Set<Effect> projectiles;
+  private static Set<Effect> sounds;
 
   public EffectManager() {
-    effects = Sets.newHashSet();
+    kill_effects = Sets.newHashSet();
+    projectiles = Sets.newHashSet();
+    sounds = Sets.newHashSet();
     setEffectsList();
   }
 
@@ -28,39 +29,65 @@ public class EffectManager {
         .getConfigurationSection("KILL_EFFECT")
         .getKeys(false)
         .forEach(
-            effect ->
-                effects.add(
-                    new Effect(
-                        effect,
-                        text(effect, NamedTextColor.GREEN, TextDecoration.BOLD),
-                        config.getInt("KILL_EFFECT." + effect + ".points"),
-                        config.getBoolean("KILL_EFFECT." + effect + ".donor"))));
+            effect -> {
+              String ROOT = "KILL_EFFECT." + effect + ".";
+              ItemStack item =
+                  new ItemStack(
+                      Material.valueOf(config.getString(ROOT + "material").toUpperCase()));
+              ItemMeta meta = item.getItemMeta();
+              meta.setDisplayName(config.getString(ROOT + "name"));
+              item.setItemMeta(meta);
+              kill_effects.add(
+                  Effect.of(
+                      config.getString(ROOT + "name"),
+                      item,
+                      config.getInt(ROOT + "slot"),
+                      config.getInt(ROOT + "points"),
+                      config.getBoolean(ROOT + "donor"),
+                      config.getBoolean(ROOT + "donor-only")));
+            });
     config
         .getConfigurationSection("PROJECTILE_TRAILS")
         .getKeys(false)
         .forEach(
-            projectile ->
-                effects.add(
-                    new Effect(
-                        projectile,
-                        text(projectile, NamedTextColor.GREEN, TextDecoration.BOLD),
-                        config.getInt("PROJECTILE_TRAILS." + projectile + ".points"),
-                        config.getBoolean("PROJECTILE_TRAILS." + projectile + ".donor"))));
+            projectile -> {
+              String ROOT = "PROJECTILE_TRAILS." + projectile + ".";
+              ItemStack item =
+                  new ItemStack(
+                      Material.valueOf(config.getString(ROOT + "material").toUpperCase()));
+              ItemMeta meta = item.getItemMeta();
+              meta.setDisplayName(config.getString(ROOT + "name"));
+              item.setItemMeta(meta);
+              projectiles.add(
+                  Effect.of(
+                      config.getString(ROOT + "name"),
+                      item,
+                      config.getInt(ROOT + "slot"),
+                      config.getInt(ROOT + "points"),
+                      config.getBoolean(ROOT + "donor"),
+                      config.getBoolean(ROOT + "donor-only")));
+            });
     config
         .getConfigurationSection("KILL_SOUND")
         .getKeys(false)
         .forEach(
-            projectile ->
-                effects.add(
-                    new Effect(
-                        projectile,
-                        text(projectile, NamedTextColor.GREEN, TextDecoration.BOLD),
-                        config.getInt("KILL_SOUND." + projectile + ".points"),
-                        config.getBoolean("KILL_SOUND." + projectile + ".donor"))));
-  }
-
-  public Optional<Effect> findEffect(String name) {
-    return effects.stream().filter(x -> x.getName().equalsIgnoreCase(name)).findFirst();
+            sound -> {
+              String ROOT = "KILL_SOUND." + sound + ".";
+              ItemStack item =
+                  new ItemStack(
+                      Material.valueOf(config.getString(ROOT + "material").toUpperCase()));
+              ItemMeta meta = item.getItemMeta();
+              meta.setDisplayName(config.getString(ROOT + "name"));
+              item.setItemMeta(meta);
+              sounds.add(
+                  Effect.of(
+                      config.getString(ROOT + "name"),
+                      item,
+                      config.getInt(ROOT + "slot"),
+                      config.getInt(ROOT + "points"),
+                      config.getBoolean(ROOT + "donor"),
+                      config.getBoolean(ROOT + "donor-only")));
+            });
   }
 
   public boolean hasRequirePoint(Effect effect, UserProfile profile) {
@@ -71,7 +98,15 @@ public class EffectManager {
     return effect.getName().equals("NONE");
   }
 
-  public Set<Effect> getEffects() {
-    return effects;
+  public static Set<Effect> getKillEffects() {
+    return kill_effects;
+  }
+
+  public static Set<Effect> getProjectiles() {
+    return projectiles;
+  }
+
+  public static Set<Effect> getSounds() {
+    return sounds;
   }
 }

@@ -1,29 +1,42 @@
 package network.atria.Effects.Particles;
 
-import java.util.Objects;
-import net.kyori.adventure.text.Component;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 public class Effect {
 
   private final String Name;
-  private final Component coloredName;
+  private final ItemStack icon;
+  private final int slot;
   private final int point;
   private final boolean donor;
+  private final boolean donor_only;
 
-  public Effect(String Name, Component coloredName, int point, boolean donor) {
+  public Effect(
+      String Name, ItemStack icon, int slot, int point, boolean donor, boolean donor_only) {
     this.Name = Name;
-    this.coloredName = coloredName;
+    this.icon = icon;
+    this.slot = slot;
     this.point = point;
     this.donor = donor;
+    this.donor_only = donor_only;
   }
 
   public String getName() {
     return this.Name;
   }
 
-  public Component getColoredName() {
-    return this.coloredName;
+  public String getUncoloredName() {
+    return ChatColor.stripColor(this.Name);
+  }
+
+  public ItemStack getIcon() {
+    return icon;
+  }
+
+  public Integer getSlot() {
+    return slot;
   }
 
   public Integer getPoint() {
@@ -34,35 +47,12 @@ public class Effect {
     return this.donor;
   }
 
-  public boolean canUseDonorOnly(Player player) {
-    return this.donor && player.hasPermission("pgm.group.donor");
+  public boolean isDonorOnly(Player player) {
+    return donor_only && player.hasPermission("pgm.group.donor");
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    Effect effect = (Effect) o;
-    return Name.equals(effect.Name);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(Name);
-  }
-
-  @Override
-  public String toString() {
-    return "Effect{"
-        + "Name='"
-        + Name
-        + '\''
-        + ", coloredName="
-        + coloredName
-        + ", point="
-        + point
-        + ", donor="
-        + donor
-        + '}';
+  public static Effect of(
+      String Name, ItemStack icon, int slot, int point, boolean donor, boolean donor_only) {
+    return new Effect(Name, icon, slot, point, donor, donor_only);
   }
 }

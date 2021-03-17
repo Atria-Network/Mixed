@@ -115,4 +115,15 @@ public class UserProfile {
         + points
         + '}';
   }
+
+  public static UserProfile of(
+      String name,
+      UUID uuid,
+      Rank rank,
+      Effect killeffect,
+      Effect projectile,
+      Effect killsound,
+      Integer points) {
+    return new UserProfile(name, uuid, rank, killeffect, projectile, killsound, points);
+  }
 }

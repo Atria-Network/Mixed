@@ -28,7 +28,7 @@ public class KillEffects extends ParticleAPI implements Listener {
     MatchPlayer victim = e.getVictim();
 
     if (e.getKiller() != null) {
-      murder = e.getKiller().getParty().getPlayer(e.getKiller().getId());
+      murder = e.getKiller().getPlayer().get();
       if (murder.getSettings().getValue(SettingKey.EFFECTS).equals(SettingValue.EFFECTS_OFF))
         return;
       Location location = victim.getBukkit().getLocation();

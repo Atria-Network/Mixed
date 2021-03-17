@@ -1,9 +1,6 @@
 package network.atria.Statistics;
 
 import com.google.common.collect.Maps;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;

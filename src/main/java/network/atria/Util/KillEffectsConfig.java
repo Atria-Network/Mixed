@@ -4,27 +4,25 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import network.atria.Mixed;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.Plugin;
 
 public class KillEffectsConfig {
 
   private static FileConfiguration config = null;
   private static File configFile;
   private static String file;
-  private static Plugin plugin;
 
-  public KillEffectsConfig(Plugin plugin, String fileName) {
-    KillEffectsConfig.plugin = plugin;
+  public KillEffectsConfig(String fileName) {
     file = fileName;
-    configFile = new File(plugin.getDataFolder(), file);
+    configFile = new File(Mixed.get().getDataFolder(), file);
   }
 
   public static void reloadConfig() {
     config = YamlConfiguration.loadConfiguration(configFile);
 
-    InputStream defConfigStream = plugin.getResource(file);
+    InputStream defConfigStream = Mixed.get().getResource(file);
     if (defConfigStream == null) {
       return;
     }

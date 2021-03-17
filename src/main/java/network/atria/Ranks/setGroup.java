@@ -7,7 +7,6 @@ import net.luckperms.api.model.user.User;
 import net.luckperms.api.node.types.PermissionNode;
 import network.atria.Manager.RankManager;
 import network.atria.Mixed;
-import network.atria.MySQL;
 import network.atria.UserProfile.UserProfile;
 
 public class setGroup {
@@ -22,7 +21,6 @@ public class setGroup {
       removeGroup(user, profile.getRank().getName());
       addGroup(user, rankManager.getNextRank(uuid).getName());
       profile.setRank(rankManager.getNextRank(uuid));
-      MySQL.SQLQuery.update("RANKS", "GAMERANK", rankManager.getNextRank(uuid).getName(), uuid);
       api.getUserManager().saveUser(user);
     }
   }

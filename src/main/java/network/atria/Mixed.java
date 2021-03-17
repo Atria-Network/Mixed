@@ -56,8 +56,8 @@ public class Mixed extends JavaPlugin implements Listener {
   @Override
   public void onEnable() {
     instance = this;
-    new RanksConfig(this, "ranks.yml");
-    new KillEffectsConfig(this, "effects.yml");
+    new RanksConfig("ranks.yml");
+    new KillEffectsConfig("effects.yml");
 
     config.options().copyDefaults();
     saveDefaultConfig();
