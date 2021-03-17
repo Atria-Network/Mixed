@@ -1,13 +1,25 @@
 package network.atria;
 
+import static net.kyori.adventure.text.Component.text;
+
+import com.google.common.collect.Maps;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import java.sql.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
+import net.kyori.adventure.text.format.NamedTextColor;
+import network.atria.Effects.Particles.Effect;
+import network.atria.Manager.EffectManager;
+import network.atria.Ranks.Rank;
+import network.atria.UserProfile.UserProfile;
 import org.bukkit.configuration.file.FileConfiguration;
 
 public class MySQL {
 
+  private static SQLQuery query;
   private static MySQL mySQL;
   private HikariDataSource ds;
 
@@ -28,33 +40,7 @@ public class MySQL {
 
     ds = new HikariDataSource(hikari);
     mySQL = this;
-  }
-
-  public void createTables() {
-    Connection connection = null;
-    try {
-      connection = ds.getConnection();
-      Statement statement = connection.createStatement();
-
-      statement.executeUpdate(
-          "CREATE TABLE IF NOT EXISTS STATS(UUID varchar(36) NOT NULL PRIMARY KEY, NAME varchar(20), KILLS int, DEATHS int, FLAGS int, CORES int, WOOLS int, MONUMENTS int, PLAYTIME int, POINTS int, WINS int, LOSES int);");
-      statement.executeUpdate(
-          "CREATE TABLE IF NOT EXISTS WEEK_STATS(UUID varchar(36) NOT NULL PRIMARY KEY, NAME varchar(20), KILLS int, DEATHS int, FLAGS int, CORES int, WOOLS int, MONUMENTS int, PLAYTIME int, POINTS int, WINS int, LOSES int);");
-      statement.executeUpdate(
-          "CREATE TABLE IF NOT EXISTS RANKS(UUID varchar(36) NOT NULL PRIMARY KEY, NAME varchar(20), GAMERANK varchar(20), EFFECT varchar(20), SOUND varchar(20), PROJECTILE varchar(20));");
-
-      statement.close();
-    } catch (SQLException e) {
-      e.printStackTrace();
-    } finally {
-      if (connection != null) {
-        try {
-          connection.close();
-        } catch (SQLException e) {
-          e.printStackTrace();
-        }
-      }
-    }
+    query = new SQLQuery();
   }
 
   public static MySQL get() {
@@ -65,193 +51,300 @@ public class MySQL {
     return ds;
   }
 
-  public static class SQLQuery {
+  public static SQLQuery query() {
+    return query;
+  }
 
-    public static void update(String table, String column, String value, UUID uuid) {
-      PreparedStatement statement = null;
-      Connection connection = null;
-      StringBuilder sql = new StringBuilder();
-      sql.append("UPDATE ")
-          .append(table)
-          .append(" SET ")
-          .append(column)
-          .append(" = ? WHERE UUID = ?");
-      try {
-        connection = MySQL.get().getHikari().getConnection();
-        statement = connection.prepareStatement(sql.toString());
-        statement.setString(1, value);
-        statement.setString(2, uuid.toString());
-      } catch (SQLException e) {
-        e.printStackTrace();
-      } finally {
-        closeConnection(connection);
-        closeStatement(statement);
+  private interface queries {
+    void createTables();
+
+    UserProfile registerPlayer(String name, UUID uuid);
+
+    boolean playerExists(UUID uuid);
+
+    void updateProfile(UserProfile profile);
+
+    void insertStats(
+        UUID uuid,
+        int kill,
+        int death,
+        int flag,
+        int core,
+        int wool,
+        int monument,
+        int playtime,
+        int point,
+        int win,
+        int lose);
+
+    Map<String, Object> getStats(UUID uuid);
+  }
+
+  public static class SQLQuery implements queries {
+
+    @Override
+    public void createTables() {
+      execute(
+          "CREATE TABLE IF NOT EXISTS stats(id varchar(36) NOT NULL PRIMARY KEY, `kill` int, death int, flag int, core int, wool int, monument int, win int, lose int, playtime int, point int)");
+      execute(
+          "CREATE TABLE IF NOT EXISTS weekly_stats(id varchar(36) NOT NULL, date DATE NOT NULL UNIQUE KEY, `kill` int, death int, flag int, core int, wool int, monument int, win int, lose int, playtime int)");
+      execute(
+          "CREATE TABLE IF NOT EXISTS effect(id varchar(36) NOT NULL PRIMARY KEY, effect varchar(16), sound varchar(16), projectile varchar(16), `rank` varchar(16))");
+    }
+
+    @Override
+    public UserProfile registerPlayer(String name, UUID uuid) {
+      execute(
+          "INSERT INTO stats(id, `kill`, death, flag, core, wool, monument, playtime, point, win, lose) VALUES (?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) ON DUPLICATE KEY UPDATE id = VALUES(id)",
+          uuid.toString());
+      execute(
+          "INSERT IGNORE INTO effect(id, `rank`, effect, sound, projectile) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE id = VALUES(id)",
+          uuid.toString(),
+          "wood_iii",
+          "NONE",
+          "DEFAULT",
+          "NONE");
+      return registerUserProfile(name, uuid);
+    }
+
+    @Override
+    public boolean playerExists(UUID uuid) {
+      Map<String, Object> result =
+          get("SELECT id FROM stats WHERE id = ? LIMIT 1", uuid.toString());
+      if (result == null) {
+        return false;
+      }
+      return result.get("id") != null;
+    }
+
+    @Override
+    public void updateProfile(UserProfile profile) {
+      execute(
+          "UPDATE effect SET `rank` = ?, effect = ?, sound = ?, projectile = ? WHERE id = ?",
+          profile.getRank().getName(),
+          profile.getKilleffect().getUncoloredName(),
+          profile.getKillsound().getUncoloredName(),
+          profile.getProjectile().getUncoloredName(),
+          profile.getUUID().toString());
+    }
+
+    @Override
+    public void insertStats(
+        UUID uuid,
+        int kill,
+        int death,
+        int flag,
+        int core,
+        int wool,
+        int monument,
+        int playtime,
+        int point,
+        int win,
+        int lose) {
+      execute(
+          "INSERT INTO stats(id, `kill`, death, flag, core, wool, monument, playtime, point, win, lose) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `kill` = `kill` + VALUES(`kill`), death = death + VALUES(death), flag = flag + VALUES(flag), wool = wool + VALUES(wool), monument = monument + VALUES(monument), playtime = playtime + VALUES(playtime), point = point + VALUES(point), win = win + VALUES(win), lose = lose + VALUES(lose)",
+          uuid.toString(),
+          kill,
+          death,
+          flag,
+          core,
+          wool,
+          monument,
+          playtime,
+          point,
+          win,
+          lose);
+      execute(
+          "INSERT INTO weekly_stats(id, date, `kill`, death, flag, core, wool, monument, win, lose, playtime) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `kill` = `kill` + VALUES(`kill`), death = death + VALUES(death), flag = flag + VALUES(flag), wool = wool + VALUES(wool), monument = monument + VALUES(monument), win = win + VALUES(win), lose = lose + VALUES(lose), playtime = playtime + VALUES(playtime)",
+          uuid.toString(),
+          new Date(System.currentTimeMillis()),
+          kill,
+          death,
+          flag,
+          core,
+          wool,
+          monument,
+          win,
+          lose,
+          playtime);
+    }
+
+    @Override
+    public Map<String, Object> getStats(UUID uuid) {
+      return get(
+          "SELECT `kill`, death, flag, core, wool, monument, win, lose FROM stats WHERE id = ?",
+          uuid.toString());
+    }
+
+    private UserProfile registerUserProfile(String name, UUID uuid) {
+      Map<String, Object> result =
+          get(
+              "SELECT `rank`, effect, sound, projectile, point FROM effect, stats WHERE stats.id = ? LIMIT 1",
+              uuid.toString());
+
+      Effect effect =
+          EffectManager.getKillEffects().stream()
+              .filter(x -> x.getName().equalsIgnoreCase(result.get("effect").toString()))
+              .findFirst()
+              .orElse(new Effect("NONE", null, 0, 0, false, false));
+      Effect sound =
+          EffectManager.getSounds().stream()
+              .filter(x -> x.getName().equalsIgnoreCase(result.get("sound").toString()))
+              .findFirst()
+              .orElse(new Effect("DEFAULT", null, 0, 0, false, false));
+      Effect projectile =
+          EffectManager.getProjectiles().stream()
+              .filter(x -> x.getName().equalsIgnoreCase(result.get("projectile").toString()))
+              .findFirst()
+              .orElse(new Effect("NONE", null, 0, 0, false, false));
+
+      if (result != null) {
+        Rank rank = Mixed.get().getRankManager().getRank(result.get("rank").toString());
+        int point = (Integer) result.get("point");
+
+        return UserProfile.of(name, uuid, rank, effect, projectile, sound, point);
+      } else {
+        return UserProfile.of(
+            name,
+            uuid,
+            new Rank("wood_iii", text("WOOD III", NamedTextColor.GOLD), 0),
+            effect,
+            projectile,
+            sound,
+            0);
       }
     }
 
-    public static String getAsString(String table, String column, UUID uuid) {
-      String result = null;
-      PreparedStatement statement = null;
-      Connection connection = null;
-      ResultSet rs = null;
-      StringBuilder sql = new StringBuilder();
-      sql.append("SELECT ").append(column).append(" FROM ").append(table).append(" WHERE UUID = ?");
-      try {
-        connection = MySQL.get().getHikari().getConnection();
-        statement = connection.prepareStatement(sql.toString());
-        statement.setString(1, uuid.toString());
-        rs = statement.executeQuery();
-        if (rs.next()) result = rs.getString(column);
-      } catch (SQLException e) {
-        e.printStackTrace();
-      } finally {
-        closeConnection(connection);
-        closeResultSet(rs);
-        closeStatement(statement);
-      }
-      return result;
+    private void execute(String sql) {
+      Mixed.get()
+          .getServer()
+          .getScheduler()
+          .runTaskAsynchronously(
+              Mixed.get(),
+              () -> {
+                Connection connection = null;
+                PreparedStatement statement = null;
+                try {
+                  connection = MySQL.get().getHikari().getConnection();
+                  statement = connection.prepareStatement(sql);
+                  statement.executeUpdate();
+                } catch (SQLException e) {
+                  e.printStackTrace();
+                } finally {
+                  close(connection);
+                  close(statement);
+                }
+              });
     }
 
-    public static Integer getAsInteger(String table, String column, UUID uuid) {
-      int result = 0;
-      PreparedStatement statement = null;
-      Connection connection = null;
-      ResultSet rs = null;
-      StringBuilder sql = new StringBuilder();
-      sql.append("SELECT ").append(column).append(" FROM ").append(table).append(" WHERE UUID = ?");
-      try {
-        connection = MySQL.get().getHikari().getConnection();
-        statement = connection.prepareStatement(sql.toString());
-        statement.setString(1, uuid.toString());
-        rs = statement.executeQuery();
-        if (rs.next()) result = rs.getInt(column);
-      } catch (SQLException e) {
-        e.printStackTrace();
-      } finally {
-        closeConnection(connection);
-        closeResultSet(rs);
-        closeStatement(statement);
-      }
-      return result;
+    private void execute(String sql, Object... values) {
+      Mixed.get()
+          .getServer()
+          .getScheduler()
+          .runTaskAsynchronously(
+              Mixed.get(),
+              () -> {
+                Connection connection = null;
+                PreparedStatement statement = null;
+                try {
+                  connection = MySQL.get().getHikari().getConnection();
+                  statement = connection.prepareStatement(sql);
+                  setValues(statement, values);
+                  statement.executeUpdate();
+                } catch (SQLException e) {
+                  e.printStackTrace();
+                } finally {
+                  close(connection);
+                  close(statement);
+                }
+              });
     }
 
-    public static boolean playerExists(UUID uuid) {
-      ResultSet rs = null;
-      PreparedStatement statement = null;
+    private Map<String, Object> get(String sql) {
+      AtomicReference<Map<String, Object>> result = new AtomicReference<>();
+
+      Mixed.get()
+          .getServer()
+          .getScheduler()
+          .runTaskAsynchronously(
+              Mixed.get(),
+              () -> {
+                Connection connection = null;
+                PreparedStatement statement = null;
+                ResultSet rs = null;
+                ResultSetMetaData metaData;
+                try {
+                  connection = MySQL.get().getHikari().getConnection();
+                  statement = connection.prepareStatement(sql);
+                  rs = statement.executeQuery();
+                  metaData = rs.getMetaData();
+
+                  if (rs.next()) {
+                    result.set(new HashMap<>());
+                    for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                      result.get().put(metaData.getColumnName(i), rs.getObject(i));
+                    }
+                  }
+                } catch (SQLException e) {
+                  e.printStackTrace();
+                } finally {
+                  close(connection);
+                  close(statement);
+                  close(rs);
+                }
+              });
+      return result.get();
+    }
+
+    private Map<String, Object> get(String sql, Object... values) {
       Connection connection = null;
-      String sql = "SELECT UUID FROM STATS WHERE UUID = ? LIMIT 1";
+      PreparedStatement statement = null;
+      ResultSet rs = null;
+      ResultSetMetaData metaData;
+      Map<String, Object> result;
       try {
         connection = MySQL.get().getHikari().getConnection();
         statement = connection.prepareStatement(sql);
-        statement.setString(1, uuid.toString());
-        statement.setString(2, uuid.toString());
-
+        setValues(statement, values);
         rs = statement.executeQuery();
-        return (rs.next() && rs.getString("UUID") != null);
-      } catch (SQLException e) {
-        e.printStackTrace();
-        return false;
-      } finally {
-        closeStatement(statement);
-        closeResultSet(rs);
-        closeConnection(connection);
-      }
-    }
+        metaData = rs.getMetaData();
 
-    public static void createPlayer(String name, UUID uuid) {
-      Statement statement = null;
-      Connection connection = null;
-      String query =
-          "INSERT INTO STATS(UUID, NAME, KILLS, DEATHS, FLAGS, CORES, WOOLS, MONUMENTS, PLAYTIME, POINTS, WINS, LOSES) VALUES ('"
-              + uuid
-              + "', '"
-              + name
-              + "', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0');";
-      String query2 =
-          "INSERT INTO WEEK_STATS(UUID, NAME, KILLS, DEATHS, FLAGS, CORES, WOOLS, MONUMENTS, PLAYTIME, POINTS, WINS, LOSES) VALUES ('"
-              + uuid
-              + "', '"
-              + name
-              + "', '0', '0', '0', '0', '0', '0', '0', '0', '0');";
-      String query3 =
-          "INSERT INTO RANKS(UUID, NAME, GAMERANK, EFFECT, SOUND, PROJECTILE) VALUES ('"
-              + uuid
-              + "', '"
-              + name
-              + "', 'wood_iii', 'NONE', 'DEFAULT', 'NONE');";
-      try {
-        connection = MySQL.get().getHikari().getConnection();
-        statement = connection.createStatement();
-        statement.addBatch(query);
-        statement.addBatch(query2);
-        statement.addBatch(query3);
-        statement.executeBatch();
-
-      } catch (SQLException e) {
-        e.printStackTrace();
-      } finally {
-        try {
-          if (statement != null) {
-            statement.close();
+        if (rs.next()) {
+          result = Maps.newHashMap();
+          for (int i = 1; i <= metaData.getColumnCount(); i++) {
+            result.put(metaData.getColumnName(i), rs.getObject(i));
           }
-        } catch (SQLException e) {
-          e.printStackTrace();
+          return result;
         }
-        closeConnection(connection);
-      }
-    }
-
-    public static void create_weekly_table(UUID uuid, String name) {
-      PreparedStatement statement = null;
-      Connection connection = null;
-      try {
-        connection = MySQL.get().getHikari().getConnection();
-        statement =
-            connection.prepareStatement(
-                "INSERT INTO WEEK_STATS(UUID, NAME, KILLS, DEATHS, FLAGS, CORES, WOOLS, MONUMENTS, PLAYTIME, WINS, LOSES) VALUES (?, ?, '0', '0', '0', '0', '0', '0', '0', '0', '0');");
-        statement.setString(1, uuid.toString());
-        statement.setString(2, name);
-        statement.execute();
       } catch (SQLException e) {
         e.printStackTrace();
+        return null;
       } finally {
-        closeStatement(statement);
-        closeConnection(connection);
+        close(connection);
+        close(statement);
+        close(rs);
+      }
+      return null;
+    }
+
+    private static void setValues(PreparedStatement statement, Object... values)
+        throws SQLException {
+      for (int i = 0; i < values.length; i++) {
+        statement.setObject(i + 1, values[i]);
       }
     }
 
-    public static boolean playerExist_in_weekly_table(UUID uuid) {
-      Connection connection = null;
-      PreparedStatement statement = null;
-      ResultSet rs = null;
-      try {
-        connection = MySQL.get().getHikari().getConnection();
-        statement =
-            connection.prepareStatement("SELECT UUID FROM WEEK_STATS WHERE UUID = ? LIMIT 1");
-        statement.setString(1, uuid.toString());
-        rs = statement.executeQuery();
-        return (rs.next() && rs.getString("UUID") != null);
-      } catch (SQLException e) {
-        e.printStackTrace();
-        return false;
-      } finally {
-        closeStatement(statement);
-        closeResultSet(rs);
-        closeConnection(connection);
-      }
-    }
-
-    public static void closeConnection(Connection connection) {
-      if (connection != null) {
+    private void close(ResultSet rs) {
+      if (rs != null) {
         try {
-          connection.close();
+          rs.close();
         } catch (SQLException e) {
           e.printStackTrace();
         }
       }
     }
 
-    public static void closeStatement(PreparedStatement statement) {
+    private void close(PreparedStatement statement) {
       if (statement != null) {
         try {
           statement.close();
@@ -261,10 +354,10 @@ public class MySQL {
       }
     }
 
-    public static void closeResultSet(ResultSet rs) {
-      if (rs != null) {
+    private void close(Connection connection) {
+      if (connection != null) {
         try {
-          rs.close();
+          connection.close();
         } catch (SQLException e) {
           e.printStackTrace();
         }

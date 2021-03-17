@@ -63,8 +63,8 @@ public class EffectManager {
     return effects.stream().filter(x -> x.getName().equalsIgnoreCase(name)).findFirst();
   }
 
-  public boolean hasRequirePoint(Effect effect, UUID uuid) {
-    return MySQL.SQLQuery.getAsInteger("STATS", "POINTS", uuid) >= effect.getPoint();
+  public boolean hasRequirePoint(Effect effect, UserProfile profile) {
+    return profile.getPoints() >= effect.getPoint();
   }
 
   public boolean isNone(Effect effect) {

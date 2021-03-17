@@ -53,7 +53,7 @@ public class Mixed extends JavaPlugin implements Listener {
 
     MySQL database = new MySQL();
     database.connect();
-    database.createTables();
+    MySQL.query().createTables();
     registerCommands();
     registerEvents();
     this.audiences = BukkitAudiences.create(this);
@@ -67,11 +67,15 @@ public class Mixed extends JavaPlugin implements Listener {
 
   @Override
   public void onDisable() {
-    if (!profileManager.getProfiles().isEmpty())
+    if (!profileManager.getProfiles().isEmpty()) {
       profileManager.getProfiles().stream()
           .filter(Objects::nonNull)
-          .forEach(x -> profileManager.pushProfile(x));
-    if (MySQL.get().getHikari() != null) MySQL.get().getHikari().close();
+          .forEach(profile -> MySQL.query().updateProfile(profile));
+    }
+
+    if (MySQL.get().getHikari() != null) {
+      MySQL.get().getHikari().close();
+    }
     super.onDisable();
   }
 
@@ -102,14 +106,12 @@ public class Mixed extends JavaPlugin implements Listener {
     User user = api.getUserManager().getUser(event.getUniqueId());
     PermissionNode node = PermissionNode.builder("pgm.group.wood_iii").build();
 
-    if (!MySQL.SQLQuery.playerExists(event.getUniqueId())) {
-      MySQL.SQLQuery.createPlayer(event.getName(), event.getUniqueId());
+    if (user != null) {
+      user.data().add(node);
+      api.getUserManager().saveUser(user);
     }
-
-    user.data().add(node);
-    api.getUserManager().saveUser(user);
     profileManager.addProfile(
-        event.getUniqueId(), profileManager.createProfile(event.getName(), event.getUniqueId()));
+        event.getUniqueId(), MySQL.query().registerPlayer(event.getName(), event.getUniqueId()));
   }
 
   public long getUptime() {

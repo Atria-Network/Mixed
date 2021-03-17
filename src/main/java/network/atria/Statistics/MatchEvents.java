@@ -60,19 +60,7 @@ public class MatchEvents implements Listener, MatchModule {
 
   @EventHandler(priority = EventPriority.MONITOR)
   public void onLeaveMatch(PlayerLeaveMatchEvent event) {
-    Bukkit.getScheduler()
-        .runTaskAsynchronously(
-            Mixed.get(),
-            () -> {
-              Mixed.get()
-                  .getStatistics()
-                  .updateStats(
-                      event.getPlayer().getId(), event.getPlayer().getNameLegacy(), "STATS");
-              Mixed.get()
-                  .getStatistics()
-                  .updateStats(
-                      event.getPlayer().getId(), event.getPlayer().getNameLegacy(), "WEEK_STATS");
-            });
+    Mixed.get().getStatistics().updateStats(event.getPlayer().getId());
   }
 
   @EventHandler(priority = EventPriority.MONITOR)
@@ -142,7 +130,7 @@ public class MatchEvents implements Listener, MatchModule {
                 if (winners.contains(player.getCompetitor())) {
                   Mixed.get().getStatistics().addWins(player.getId());
                 } else {
-                  Mixed.get().getStatistics().addLoses(player.getId());
+                  Mixed.get().getStatistics().addLosses(player.getId());
                 }
               });
     }
@@ -157,12 +145,7 @@ public class MatchEvents implements Listener, MatchModule {
                         player -> {
                           Mixed.get().getStatistics().addPoint(player.getId(), 10);
                           manager.RankUP(player);
-                          Mixed.get()
-                              .getStatistics()
-                              .updateStats(player.getId(), player.getNameLegacy(), "STATS");
-                          Mixed.get()
-                              .getStatistics()
-                              .updateStats(player.getId(), player.getNameLegacy(), "WEEK_STATS");
+                          Mixed.get().getStatistics().updateStats(player.getId());
                         }),
             10L);
     Mixed.get().getStatistics().endMatch();

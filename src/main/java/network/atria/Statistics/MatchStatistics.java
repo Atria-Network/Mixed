@@ -70,8 +70,8 @@ public class MatchStatistics {
     wins.incrementAndGet();
   }
 
-  public void addLoses(UUID uuid) {
-    AtomicInteger loses = stats.getLoses().computeIfAbsent(uuid, x -> new AtomicInteger());
+  public void addLosses(UUID uuid) {
+    AtomicInteger loses = stats.getLosses().computeIfAbsent(uuid, x -> new AtomicInteger());
     loses.incrementAndGet();
   }
 
@@ -102,48 +102,21 @@ public class MatchStatistics {
     playtimeTask.clear();
   }
 
-  public void updateStats(UUID uuid, String name, String table) {
-    Connection connection = null;
-    PreparedStatement statement = null;
-    String baseSQL =
-        "INSERT INTO {table} (UUID, NAME, KILLS, DEATHS, FLAGS, CORES, WOOLS, MONUMENTS, PLAYTIME, WINS, LOSES, POINTS) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE "
-            + "KILLS = KILLS + VALUES(KILLS), DEATHS = DEATHS + VALUES(DEATHS), FLAGS = FLAGS + VALUES(FLAGS), CORES = CORES + VALUES(CORES), WOOLS = WOOLS + VALUES(WOOLS), MONUMENTS = MONUMENTS + VALUES(MONUMENTS), PLAYTIME = PLAYTIME + VALUES(PLAYTIME), WINS = WINS + VALUES(WINS), LOSES = LOSES + VALUES(LOSES), POINTS = POINTS + VALUES(POINTS)";
-    String sql = baseSQL.replace("{table}", table);
-    if (table.equalsIgnoreCase("WEEK_STATS")) {
-      if (!MySQL.SQLQuery.playerExist_in_weekly_table(uuid)) {
-        MySQL.SQLQuery.create_weekly_table(uuid, name);
-      }
-    }
-    try {
-      connection = MySQL.get().getHikari().getConnection();
-      statement = connection.prepareStatement(sql);
-      statement.setString(1, uuid.toString());
-      statement.setString(2, name);
-      statement.setInt(
-          2, stats.getKills().get(uuid) != null ? stats.getKills().get(uuid).get() : 0);
-      statement.setInt(
-          3, stats.getDeaths().get(uuid) != null ? stats.getDeaths().get(uuid).get() : 0);
-      statement.setInt(
-          4, stats.getFlags().get(uuid) != null ? stats.getFlags().get(uuid).get() : 0);
-      statement.setInt(
-          5, stats.getCores().get(uuid) != null ? stats.getCores().get(uuid).get() : 0);
-      statement.setInt(
-          6, stats.getWools().get(uuid) != null ? stats.getWools().get(uuid).get() : 0);
-      statement.setInt(
-          7, stats.getMonuments().get(uuid) != null ? stats.getMonuments().get(uuid).get() : 0);
-      statement.setInt(8, stats.getWins().get(uuid) != null ? stats.getWins().get(uuid).get() : 0);
-      statement.setInt(9, stats.getWins().get(uuid) != null ? stats.getWins().get(uuid).get() : 0);
-      statement.setInt(
-          10, stats.getLoses().get(uuid) != null ? stats.getLoses().get(uuid).get() : 0);
-      statement.setInt(
-          11, stats.getPlaytime().get(uuid) != null ? stats.getPlaytime().get(uuid).get() : 0);
-      statement.executeUpdate();
-    } catch (SQLException e) {
-      e.printStackTrace();
-    } finally {
-      MySQL.SQLQuery.closeConnection(connection);
-      MySQL.SQLQuery.closeStatement(statement);
-    }
+  public void updateStats(UUID uuid) {
+    int kills = stats.getKills(uuid);
+    int deaths = stats.getDeaths(uuid);
+    int flags = stats.getFlags(uuid);
+    int cores = stats.getCores(uuid);
+    int wools = stats.getWools(uuid);
+    int monuments = stats.getMonuments(uuid);
+    int playtime = stats.getPlaytime(uuid);
+    int wins = stats.getWins(uuid);
+    int losses = stats.getLosses(uuid);
+    int points = stats.getPoints(uuid);
+
+    MySQL.query()
+        .insertStats(
+            uuid, kills, deaths, flags, cores, wools, monuments, playtime, points, wins, losses);
   }
 
   public StoreStatistics getStatsSummary() {

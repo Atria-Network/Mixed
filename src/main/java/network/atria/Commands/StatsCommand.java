@@ -54,27 +54,25 @@ public class StatsCommand {
     }
   }
 
-  private void showStats(UUID uuid, Player sender) {
-    Map<String, Integer> stats = getStats(uuid);
-    MatchPlayer player =
-        PGM.get().getMatchManager().getPlayer(uuid) != null
-            ? PGM.get().getMatchManager().getPlayer(uuid)
-            : null;
+  private void showStats(UUID targetUUID, MatchPlayer sender) {
+    Map<String, Object> stats = MySQL.query().getStats(targetUUID);
+    MatchPlayer target = PGM.get().getMatchManager().getPlayer(targetUUID);
     String prefixedName =
-        player != null
-            ? player.getPrefixedName()
-            : TextFormat.format(text(Fetcher.getName(uuid), NamedTextColor.DARK_AQUA));
-    Audience audience = Mixed.get().getAudience().player(sender);
-    int kills = stats.get("KILLS");
-    int deaths = stats.get("DEATHS");
-    int wools = stats.get("WOOLS");
-    int cores = stats.get("CORES");
-    int monuments = stats.get("MONUMENTS");
-    int flags = stats.get("FLAGS");
-    int wins = stats.get("WINS");
-    int loses = stats.get("LOSES");
+        target != null
+            ? target.getPrefixedName()
+            : TextFormat.format(text(Fetcher.getName(targetUUID), NamedTextColor.AQUA));
+    Audience audience = Mixed.get().getAudience().player(sender.getBukkit());
+
+    int kills = (Integer) stats.get("kill");
+    int deaths = (Integer) stats.get("death");
+    int wools = (Integer) stats.get("wool");
+    int cores = (Integer) stats.get("core");
+    int monuments = (Integer) stats.get("monument");
+    int flags = (Integer) stats.get("flag");
+    int wins = (Integer) stats.get("win");
+    int losses = (Integer) stats.get("lose");
     double kd = divide(kills, deaths).doubleValue();
-    double wd = divide(wins, deaths).doubleValue();
+    double wl = divide(wins, deaths).doubleValue();
 
     audience.sendMessage(
         text(LegacyFormatUtils.horizontalLineHeading(prefixedName, ChatColor.BLUE, 250)));
@@ -117,37 +115,5 @@ public class StatsCommand {
       result = BigDecimal.ZERO;
     }
     return result;
-  }
-
-  private Map<String, Integer> getStats(UUID uuid) {
-    Map<String, Integer> stats = Maps.newHashMap();
-    Connection connection = null;
-    ResultSet rs = null;
-    PreparedStatement statement = null;
-    String query =
-        "SELECT KILLS, DEATHS, CORES, WOOLS, MONUMENTS, FLAGS, WINS, LOSES FROM STATS WHERE UUID = ? LIMIT 1";
-    try {
-      connection = MySQL.get().getHikari().getConnection();
-      statement = connection.prepareStatement(query);
-      statement.setString(1, uuid.toString());
-      rs = statement.executeQuery();
-      if (rs.next()) {
-        stats.put("KILLS", rs.getInt("KILLS"));
-        stats.put("DEATHS", rs.getInt("DEATHS"));
-        stats.put("CORES", rs.getInt("CORES"));
-        stats.put("WOOLS", rs.getInt("WOOLS"));
-        stats.put("MONUMENTS", rs.getInt("MONUMENTS"));
-        stats.put("FLAGS", rs.getInt("FLAGS"));
-        stats.put("WINS", rs.getInt("WINS"));
-        stats.put("LOSES", rs.getInt("LOSES"));
-      }
-    } catch (SQLException e) {
-      e.printStackTrace();
-    } finally {
-      closeConnection(connection);
-      closeStatement(statement);
-      closeResultSet(rs);
-    }
-    return stats;
   }
 }

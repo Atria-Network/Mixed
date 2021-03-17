@@ -15,7 +15,7 @@ public class StoreStatistics {
   private final Map<UUID, AtomicInteger> flags;
   private final Map<UUID, AtomicInteger> points;
   private final Map<UUID, AtomicInteger> wins;
-  private final Map<UUID, AtomicInteger> loses;
+  private final Map<UUID, AtomicInteger> losses;
   private final Map<UUID, AtomicInteger> playtime;
 
   public StoreStatistics() {
@@ -27,7 +27,7 @@ public class StoreStatistics {
     this.flags = Maps.newHashMap();
     this.points = Maps.newHashMap();
     this.wins = Maps.newHashMap();
-    this.loses = Maps.newHashMap();
+    this.losses = Maps.newHashMap();
     this.playtime = Maps.newConcurrentMap();
   }
 
@@ -36,7 +36,7 @@ public class StoreStatistics {
   }
 
   public int getKills(UUID uuid) {
-    return kills.getOrDefault(uuid, new AtomicInteger()).intValue();
+    return kills.getOrDefault(uuid, new AtomicInteger(0)).intValue();
   }
 
   public Map<UUID, AtomicInteger> getDeaths() {
@@ -44,7 +44,7 @@ public class StoreStatistics {
   }
 
   public int getDeaths(UUID uuid) {
-    return deaths.getOrDefault(uuid, new AtomicInteger()).intValue();
+    return deaths.getOrDefault(uuid, new AtomicInteger(0)).intValue();
   }
 
   public Map<UUID, AtomicInteger> getWools() {
@@ -52,7 +52,7 @@ public class StoreStatistics {
   }
 
   public int getWools(UUID uuid) {
-    return wools.getOrDefault(uuid, new AtomicInteger()).intValue();
+    return wools.getOrDefault(uuid, new AtomicInteger(0)).intValue();
   }
 
   public Map<UUID, AtomicInteger> getMonuments() {
@@ -60,7 +60,7 @@ public class StoreStatistics {
   }
 
   public int getMonuments(UUID uuid) {
-    return monuments.getOrDefault(uuid, new AtomicInteger()).intValue();
+    return monuments.getOrDefault(uuid, new AtomicInteger(0)).intValue();
   }
 
   public Map<UUID, AtomicInteger> getCores() {
@@ -68,7 +68,7 @@ public class StoreStatistics {
   }
 
   public int getCores(UUID uuid) {
-    return cores.getOrDefault(uuid, new AtomicInteger()).intValue();
+    return cores.getOrDefault(uuid, new AtomicInteger(0)).intValue();
   }
 
   public Map<UUID, AtomicInteger> getFlags() {
@@ -76,7 +76,7 @@ public class StoreStatistics {
   }
 
   public int getFlags(UUID uuid) {
-    return flags.getOrDefault(uuid, new AtomicInteger()).intValue();
+    return flags.getOrDefault(uuid, new AtomicInteger(0)).intValue();
   }
 
   public Map<UUID, AtomicInteger> getPoints() {
@@ -84,7 +84,7 @@ public class StoreStatistics {
   }
 
   public int getPoints(UUID uuid) {
-    return points.getOrDefault(uuid, new AtomicInteger()).intValue();
+    return points.getOrDefault(uuid, new AtomicInteger(0)).intValue();
   }
 
   public Map<UUID, AtomicInteger> getWins() {
@@ -92,15 +92,15 @@ public class StoreStatistics {
   }
 
   public int getWins(UUID uuid) {
-    return wins.getOrDefault(uuid, new AtomicInteger()).intValue();
+    return wins.getOrDefault(uuid, new AtomicInteger(0)).intValue();
   }
 
-  public Map<UUID, AtomicInteger> getLoses() {
-    return loses;
+  public Map<UUID, AtomicInteger> getLosses() {
+    return losses;
   }
 
-  public int getLoses(UUID uuid) {
-    return loses.getOrDefault(uuid, new AtomicInteger()).intValue();
+  public int getLosses(UUID uuid) {
+    return losses.getOrDefault(uuid, new AtomicInteger(0)).intValue();
   }
 
   public Map<UUID, AtomicInteger> getPlaytime() {
@@ -108,6 +108,6 @@ public class StoreStatistics {
   }
 
   public int getPlaytime(UUID uuid) {
-    return playtime.getOrDefault(uuid, new AtomicInteger()).intValue();
+    return playtime.getOrDefault(uuid, new AtomicInteger(0)).intValue();
   }
 }
