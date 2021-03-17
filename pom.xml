@@ -46,13 +46,13 @@
         <dependency>
             <groupId>tc.oc.pgm</groupId>
             <artifactId>core</artifactId>
-            <version>0.10-SNAPSHOT</version>
+            <version>0.11-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>tc.oc.pgm</groupId>
             <artifactId>util</artifactId>
-            <version>0.10-SNAPSHOT</version>
+            <version>0.11-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -82,13 +82,13 @@
         <dependency>
             <groupId>net.kyori</groupId>
             <artifactId>adventure-api</artifactId>
-            <version>4.4.0</version>
+            <version>4.7.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>net.kyori</groupId>
             <artifactId>adventure-text-serializer-plain</artifactId>
-            <version>4.3.0</version>
+            <version>4.7.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
