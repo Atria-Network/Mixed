@@ -1,4 +1,4 @@
-package network.atria.Effects.GUI.GUIes;
+package network.atria.GUI.GUIes;
 
 import static net.kyori.adventure.text.Component.text;
 
@@ -6,7 +6,7 @@ import app.ashcon.intake.Command;
 import app.ashcon.intake.bukkit.parametric.annotation.Sender;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import network.atria.Effects.GUI.GUI;
+import network.atria.GUI.GUI;
 import network.atria.Mixed;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -22,16 +22,20 @@ public class MainGUI extends GUI {
     setItem(
         10,
         createIcon(
-            text("Kill Effect", NamedTextColor.GREEN, TextDecoration.BOLD), Material.REDSTONE),
+            text("Kill Effect").color(NamedTextColor.GREEN).decorate(TextDecoration.BOLD),
+            Material.REDSTONE),
         player -> open(player, Mixed.get().getGUIManager().getKillEffectsGUI()));
     setItem(
         12,
         createIcon(
-            text("Kill Effect", NamedTextColor.GREEN, TextDecoration.BOLD), Material.RECORD_4),
+            text("Kill Sound").color(NamedTextColor.GREEN).decorate(TextDecoration.BOLD),
+            Material.RECORD_4),
         player -> open(player, Mixed.get().getGUIManager().getSoundsGUI()));
     setItem(
         14,
-        createIcon(text("Kill Effect", NamedTextColor.GREEN, TextDecoration.BOLD), Material.BOW),
+        createIcon(
+            text("Projectile Trail").color(NamedTextColor.GREEN).decorate(TextDecoration.BOLD),
+            Material.BOW),
         player -> open(player, Mixed.get().getGUIManager().getProjectilesGUI()));
   }
 

@@ -1,4 +1,4 @@
-package network.atria.Effects.GUI;
+package network.atria.GUI;
 
 import static network.atria.Util.TextFormat.format;
 
@@ -36,21 +36,22 @@ public abstract class GUI implements Listener {
     }
   }
 
-  public ItemStack createIcon(Component name, Material material, List<String> lores) {
+  public ItemStack createIcon(Component name, Material material) {
     ItemStack item = new ItemStack(material);
     ItemMeta meta = item.getItemMeta();
 
     meta.setDisplayName(format(name));
-    if (lores != null && !lores.isEmpty()) {
-      meta.setLore(lores);
-    }
-
     item.setItemMeta(meta);
     return item;
   }
 
-  public ItemStack createIcon(Component name, Material material) {
-    return createIcon(name, material, null);
+  public ItemStack createIcon(Component name, Material material, List<String> lores) {
+    ItemStack item = createIcon(name, material);
+    ItemMeta meta = item.getItemMeta();
+
+    meta.setLore(lores);
+    item.setItemMeta(meta);
+    return item;
   }
 
   public void open(Player player) {
@@ -81,14 +82,16 @@ public abstract class GUI implements Listener {
         return;
       }
 
-      Player player = (Player) event.getWhoClicked();
-      GUI gui = Mixed.get().getGUIManager().findGUI(event.getClickedInventory().getTitle());
-
-      if (gui != null) {
-        Action action = gui.getActions().get(event.getSlot());
-        action.click(player);
-        event.setCancelled(true);
-      }
+      Mixed.get()
+          .getGUIManager()
+          .findGUI(event.getView().getTitle())
+          .ifPresent(
+              gui -> {
+                Player player = (Player) event.getWhoClicked();
+                Action action = gui.getActions().get(event.getSlot());
+                if (action != null) action.click(player);
+                event.setCancelled(true);
+              });
     }
   }
 

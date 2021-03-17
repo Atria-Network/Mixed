@@ -15,7 +15,13 @@ import network.atria.Effects.GUI.*;
 import network.atria.Effects.Particles.KillEffects;
 import network.atria.Effects.Particles.ProjectileTrails;
 import network.atria.Effects.Sounds.KillSounds;
+import network.atria.GUI.GUI;
+import network.atria.GUI.GUIes.KillEffectsGUI;
+import network.atria.GUI.GUIes.MainGUI;
+import network.atria.GUI.GUIes.ProjectilesGUI;
+import network.atria.GUI.GUIes.SoundsGUI;
 import network.atria.Manager.EffectManager;
+import network.atria.Manager.GUIManager;
 import network.atria.Manager.RankManager;
 import network.atria.Manager.UserProfileManager;
 import network.atria.Statistics.MatchEvents;
@@ -40,6 +46,7 @@ public class Mixed extends JavaPlugin implements Listener {
   private RankManager rankManager;
   private UserProfileManager profileManager;
   private EffectManager effectManager;
+  private GUIManager guiManager;
   private final FileConfiguration config = getConfig();
 
   @Override
@@ -62,6 +69,8 @@ public class Mixed extends JavaPlugin implements Listener {
     this.effectManager = new EffectManager();
     this.profileManager = new UserProfileManager();
     this.statistics = new MatchStatistics();
+    this.guiManager = new GUIManager();
+    createGUIs();
     super.onEnable();
   }
 
@@ -83,12 +92,8 @@ public class Mixed extends JavaPlugin implements Listener {
     PluginManager pm = Bukkit.getServer().getPluginManager();
 
     pm.registerEvents(this, this);
-    pm.registerEvents(new CustomGUI(), this);
     pm.registerEvents(new UserProfileManager(), this);
-    new KillEffectsGUI(this);
-    new KillSoundsGUI(this);
-    new DefaultGUI(this);
-    new ProjectileGUI(this);
+    pm.registerEvents(new GUI.GUIListener(), this);
     new MatchEvents(this);
     new KillEffects(this);
     new KillSounds(this);
@@ -98,6 +103,13 @@ public class Mixed extends JavaPlugin implements Listener {
   private void registerCommands() {
     CommandGraph graph = new CommandGraph();
     new CommandExecutor(this, graph).register();
+  }
+
+  private void createGUIs() {
+    new KillEffectsGUI();
+    new MainGUI();
+    new ProjectilesGUI();
+    new SoundsGUI();
   }
 
   @EventHandler(priority = EventPriority.MONITOR)
@@ -145,5 +157,9 @@ public class Mixed extends JavaPlugin implements Listener {
 
   public EffectManager getEffectManager() {
     return this.effectManager;
+  }
+
+  public GUIManager getGUIManager() {
+    return this.guiManager;
   }
 }

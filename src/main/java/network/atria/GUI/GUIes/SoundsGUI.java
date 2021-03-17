@@ -1,15 +1,16 @@
-package network.atria.Effects.GUI.GUIes;
+package network.atria.GUI.GUIes;
 
 import static net.kyori.adventure.text.Component.text;
 import static network.atria.Util.TextFormat.format;
+import static network.atria.Util.TextFormat.message;
 
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import network.atria.Effects.GUI.GUI;
+import network.atria.Effects.Particles.Effect;
+import network.atria.GUI.GUI;
 import network.atria.Manager.EffectManager;
 import network.atria.Mixed;
-import network.atria.MySQL;
 import network.atria.UserProfile.UserProfile;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
@@ -20,7 +21,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 public class SoundsGUI extends GUI {
 
   public SoundsGUI() {
-    super(27, text("Kill Sounds"));
+    super(27, text("Kill Sounds").color(NamedTextColor.GREEN).decorate(TextDecoration.BOLD));
     initializeItems();
   }
 
@@ -28,23 +29,24 @@ public class SoundsGUI extends GUI {
     ItemStack reset = new ItemStack(Material.STAINED_GLASS_PANE, 1, DyeColor.RED.getData());
     ItemMeta reset_meta = reset.getItemMeta();
 
-    reset_meta.setDisplayName(
-        format(text("Reset Kill Sound", NamedTextColor.RED, TextDecoration.BOLD)));
+    reset_meta.setDisplayName(format(text("Reset your Kill Sound").color(NamedTextColor.RED)));
     reset.setItemMeta(reset_meta);
     setItem(
         26,
         reset,
         player -> {
           Audience audience = Mixed.get().getAudience().player(player);
-          audience.sendMessage(text("Reset your Kill Sound", NamedTextColor.GREEN));
-          MySQL.SQLQuery.update("RANKS", "SOUND", "DEFAULT", player.getUniqueId());
+          UserProfile profile = Mixed.get().getProfileManager().getProfile(player.getUniqueId());
+
+          audience.sendMessage(
+              message("gui.effect.reset", NamedTextColor.GREEN, text("Kill Sound")));
+          profile.setKillsound(new Effect("NONE", null, 0, 0, false, false));
         });
 
     ItemStack back = new ItemStack(Material.ARROW);
     ItemMeta back_meta = back.getItemMeta();
 
-    back_meta.setDisplayName(
-        format(text("Go to previous page ➡", NamedTextColor.RED, TextDecoration.BOLD)));
+    back_meta.setDisplayName(format(text("Go to previous page ⇒").color(NamedTextColor.RED)));
     back.setItemMeta(back_meta);
     setItem(8, back, player -> open(player, Mixed.get().getGUIManager().getMainGUI()));
 
@@ -63,21 +65,22 @@ public class SoundsGUI extends GUI {
                       if (sound.isDonorOnly(player)) {
                         profile.setKillsound(sound);
                         audience.sendMessage(
-                            text("You selected ", NamedTextColor.GREEN)
-                                .append(text(sound.getName()))
-                                .append(text(" kill sound", NamedTextColor.GREEN)));
-                      } else if (sound.canUseDonor()
-                          || manager.hasRequirePoint(sound, player.getUniqueId())) {
-                        MySQL.SQLQuery.update(
-                            "RANKS", "SOUND", sound.getUncoloredName(), player.getUniqueId());
+                            message(
+                                "gui.effect.select",
+                                NamedTextColor.GREEN,
+                                text(sound.getName()),
+                                text("kill sound")));
+                      } else if (sound.canUseDonor() || manager.hasRequirePoint(sound, profile)) {
                         profile.setKillsound(sound);
                         audience.sendMessage(
-                            text("You selected ", NamedTextColor.GREEN)
-                                .append(text(sound.getName()))
-                                .append(text(" kill sound", NamedTextColor.GREEN)));
+                            message(
+                                "gui.effect.select",
+                                NamedTextColor.GREEN,
+                                text(profile.getName()),
+                                text("kill sound")));
                       } else {
                         audience.sendMessage(
-                            text("You don't have enough points.", NamedTextColor.RED));
+                            message("gui.effect.select.reject", NamedTextColor.RED));
                       }
                     }));
   }
