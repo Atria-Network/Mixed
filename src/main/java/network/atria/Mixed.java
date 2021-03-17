@@ -3,15 +3,19 @@ package network.atria;
 import com.github.fierioziy.particlenativeapi.api.ParticleNativeAPI;
 import com.github.fierioziy.particlenativeapi.api.Particles_1_8;
 import com.github.fierioziy.particlenativeapi.plugin.ParticleNativePlugin;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.ResourceBundle;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
+import net.kyori.adventure.translation.GlobalTranslator;
+import net.kyori.adventure.translation.TranslationRegistry;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.model.user.User;
 import net.luckperms.api.node.types.PermissionNode;
 import network.atria.Commands.graph.CommandExecutor;
 import network.atria.Commands.graph.CommandGraph;
-import network.atria.Effects.GUI.*;
 import network.atria.Effects.Particles.KillEffects;
 import network.atria.Effects.Particles.ProjectileTrails;
 import network.atria.Effects.Sounds.KillSounds;
@@ -63,6 +67,7 @@ public class Mixed extends JavaPlugin implements Listener {
     MySQL.query().createTables();
     registerCommands();
     registerEvents();
+    registerTranslator();
     this.audiences = BukkitAudiences.create(this);
     this.uptime = System.currentTimeMillis();
     this.rankManager = new RankManager();
@@ -86,6 +91,12 @@ public class Mixed extends JavaPlugin implements Listener {
       MySQL.get().getHikari().close();
     }
     super.onDisable();
+  }
+
+  private void registerTranslator() {
+    TranslationRegistry registry = TranslationRegistry.create(Key.key("message"));
+    registry.registerAll(Locale.US, ResourceBundle.getBundle("message"), true);
+    GlobalTranslator.get().addSource(registry);
   }
 
   private void registerEvents() {

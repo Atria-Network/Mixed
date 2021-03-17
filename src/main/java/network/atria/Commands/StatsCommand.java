@@ -1,23 +1,16 @@
 package network.atria.Commands;
 
 import static net.kyori.adventure.text.Component.text;
-import static network.atria.MySQL.SQLQuery.*;
+import static network.atria.Util.TextFormat.message;
 
 import app.ashcon.intake.Command;
 import app.ashcon.intake.bukkit.parametric.annotation.Sender;
-import com.google.common.collect.Maps;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.md_5.bungee.api.ChatColor;
 import network.atria.Mixed;
@@ -39,18 +32,23 @@ public class StatsCommand {
   public void stats(@Sender Player player, @Nullable String playerName) {
     MatchPlayer matchPlayer = PGM.get().getMatchManager().getPlayer(player);
     if (matchPlayer == null) return;
+
     if (playerName == null) {
-      showStats(matchPlayer.getId(), player);
-    } else if (Bukkit.getPlayer(playerName) != null) {
+      showStats(matchPlayer.getId(), matchPlayer);
+      return;
+    }
+
+    if (Bukkit.getPlayer(playerName) != null) {
       MatchPlayer target = PGM.get().getMatchManager().getPlayer(Bukkit.getPlayer(playerName));
-      if (target != null) {
-        showStats(target.getId(), player);
-      }
-    } else if (MySQL.SQLQuery.playerExists(Fetcher.getUUID(playerName))) {
-      showStats(Fetcher.getUUID(playerName), player);
+      showStats(target.getId(), matchPlayer);
+      return;
+    }
+
+    if (MySQL.query().playerExists(Fetcher.getUUID(playerName))) {
+      showStats(Fetcher.getUUID(playerName), matchPlayer);
     } else {
-      Audience audience = Mixed.get().getAudience().player(matchPlayer.getId());
-      audience.sendMessage(Component.text("The player not found", NamedTextColor.RED));
+      Audience audience = Mixed.get().getAudience().player(matchPlayer.getBukkit());
+      audience.sendMessage(message("stats.target.not", NamedTextColor.RED));
     }
   }
 
@@ -77,32 +75,28 @@ public class StatsCommand {
     audience.sendMessage(
         text(LegacyFormatUtils.horizontalLineHeading(prefixedName, ChatColor.BLUE, 250)));
     audience.sendMessage(
-        formatStats("Kills: ", kills)
-            .append(formatStats("Deaths: ", deaths))
-            .append(text("K/D: ", NamedTextColor.DARK_AQUA).append(text(kd, NamedTextColor.AQUA))));
+        message(
+            "stats.command.line1",
+            text(kills, NamedTextColor.AQUA),
+            text(deaths, NamedTextColor.AQUA),
+            text(kd, NamedTextColor.AQUA)));
     audience.sendMessage(
         text(LegacyFormatUtils.horizontalLineHeading("§bObjectives", ChatColor.BLUE, 250)));
     audience.sendMessage(
-        formatStats("Wools: ", wools)
-            .append(formatStats("Cores: ", cores))
-            .append(formatStats("Monuments: ", monuments))
-            .append(formatStats("Flags: ", flags)));
+        message(
+            "stats.command.line2",
+            text(wools, NamedTextColor.AQUA),
+            text(cores, NamedTextColor.AQUA),
+            text(monuments, NamedTextColor.AQUA),
+            text(flags, NamedTextColor.AQUA)));
     audience.sendMessage(
         text(LegacyFormatUtils.horizontalLineHeading("§bOthers", ChatColor.BLUE, 250)));
     audience.sendMessage(
-        formatStats("Wins: ", wins)
-            .append(
-                formatStats("Loses: ", loses)
-                    .append(text("W/L: ", NamedTextColor.DARK_AQUA))
-                    .append(text(wd, NamedTextColor.AQUA))));
-  }
-
-  private TextComponent formatStats(String ladder, int value) {
-    return text()
-        .append(text(ladder, NamedTextColor.DARK_AQUA))
-        .append(text(value, NamedTextColor.AQUA))
-        .append(text(" | ", NamedTextColor.WHITE))
-        .build();
+        message(
+            "stats.command.line3",
+            text(wins, NamedTextColor.AQUA),
+            text(losses, NamedTextColor.AQUA),
+            text(wl, NamedTextColor.AQUA)));
   }
 
   private BigDecimal divide(int kills, int deaths) {

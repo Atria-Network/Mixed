@@ -1,13 +1,12 @@
 package network.atria.Manager;
 
 import static net.kyori.adventure.text.Component.text;
+import static network.atria.Util.TextFormat.message;
 
 import com.google.common.collect.Lists;
 import java.util.*;
 import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.text.TextComponent;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
+import net.md_5.bungee.api.ChatColor;
 import network.atria.Mixed;
 import network.atria.Ranks.Rank;
 import network.atria.Ranks.setGroup;
@@ -17,6 +16,7 @@ import network.atria.Util.TextFormat;
 import org.bukkit.Sound;
 import org.bukkit.configuration.file.FileConfiguration;
 import tc.oc.pgm.api.player.MatchPlayer;
+import tc.oc.pgm.util.LegacyFormatUtils;
 
 public class RankManager {
 
@@ -81,25 +81,17 @@ public class RankManager {
     UserProfile profile = Mixed.get().getProfileManager().getProfile(uuid);
     if (canRankUp(uuid)) {
       audience.sendMessage(
-          text()
-              .append(text(player.getPrefixedName()))
-              .append(text("has rank up to", NamedTextColor.RED))
-              .append(next.getColoredName()));
+          message("rank.rankup.broadcast", text(player.getPrefixedName()), next.getColoredName()));
+
       player
           .getBukkit()
           .playSound(player.getBukkit().getLocation(), Sound.LEVEL_UP, 10, (float) 0.3);
 
       audience.sendMessage(
-          TextComponent.ofChildren(
-              text("〓〓〓〓〓〓", NamedTextColor.YELLOW, TextDecoration.BOLD),
-              text(" Rank UP! ", NamedTextColor.RED, TextDecoration.BOLD),
-              text("〓〓〓〓〓〓", NamedTextColor.YELLOW, TextDecoration.BOLD)));
+          text(LegacyFormatUtils.horizontalLineHeading("Rank UP!", ChatColor.DARK_BLUE, 300)));
       audience.sendMessage(
-          text()
-              .append(profile.getRank().getColoredName())
-              .append(text("  ⇒  ", NamedTextColor.GRAY, TextDecoration.BOLD))
-              .append(next.getColoredName()));
-      audience.sendMessage(text("〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓", NamedTextColor.YELLOW, TextDecoration.BOLD));
+          message("rank.rankup", profile.getRank().getColoredName(), next.getColoredName()));
+      audience.sendMessage(text(LegacyFormatUtils.horizontalLine(ChatColor.DARK_BLUE, 300)));
 
       chatPrefix.setPrefixPermission(uuid);
     }
